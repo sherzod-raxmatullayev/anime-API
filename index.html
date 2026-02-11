@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Video Range Test</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; padding: 20px; }
+    video { width: 100%; max-width: 900px; background: #000; border-radius: 10px; }
+    .row { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+    input { width: min(900px, 100%); padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
+    button { padding: 10px 14px; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; }
+    pre { background: #f6f6f6; padding: 12px; border-radius: 10px; overflow: auto; max-width: 900px; }
+  </style>
+</head>
+<body>
+  <h2>Video Range Test</h2>
+
+  <p>Video URL (Django endpoint):</p>
+  <input id="url" value="http://127.0.0.1:8000/anime/episodes/1/video/" />
+
+  <div class="row">
+    <button id="load">Load video</button>
+    <button id="head">HEAD (tekshir)</button>
+    <button id="range">GET Range 0-1023</button>
+  </div>
+
+  <p style="margin-top:14px;">Player:</p>
+  <video id="player" controls playsinline></video>
+
+  <h3>Log</h3>
+  <pre id="log">---</pre>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const log = (msg) => { $("log").textContent = msg; };
+
+    $("load").addEventListener("click", () => {
+      const url = $("url").value.trim();
+      $("player").src = url;
+      $("player").load();
+      log("Video src set: " + url + "\nEndi play bos. Seek qil (oldinga orqaga sur) — server Range’ni to‘g‘ri handle qilsa ishlaydi.");
+    });
+
+    $("head").addEventListener("click", async () => {
+      const url = $("url").value.trim();
+      try {
+        const res = await fetch(url, { method: "HEAD" });
+        let out = `HEAD ${url}\nstatus: ${res.status}\n\nHeaders:\n`;
+        for (const [k, v] of res.headers.entries()) out += `${k}: ${v}\n`;
+        log(out);
+      } catch (e) {
+        log("HEAD error: " + e);
+      }
+    });
+
+    $("range").addEventListener("click", async () => {
+      const url = $("url").value.trim();
+      try {
+        const res = await fetch(url, {
+          method: "GET",
+          headers: { "Range": "bytes=0-1023" }
+        });
+        const buf = await res.arrayBuffer();
+        let out = `GET Range bytes=0-1023 ${url}\nstatus: ${res.status}\nreceived bytes: ${buf.byteLength}\n\nHeaders:\n`;
+        for (const [k, v] of res.headers.entries()) out += `${k}: ${v}\n`;
+        log(out);
+      } catch (e) {
+        log("Range GET error: " + e);
+      }
+    });
+  </script>
+</body>
+</html>
