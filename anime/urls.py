@@ -2,12 +2,13 @@
 from django.urls import path
 from .views import AnimeEpisodesListView, AnimeViewSet, EpisodeVideoStreamView, SavedAnimeToggleView
 from rest_framework.routers import DefaultRouter
-from .views import SavedAnimeListCreateView, SavedAnimeDeleteView
+from .views import SavedAnimeListCreateView, SavedAnimeDeleteView, AnimeEpisodeListAPIView
 router = DefaultRouter()
 router.register(r"animes", AnimeViewSet, basename="animes")
 
 urlpatterns = [
     # custom endpointlar
+    path("animes/search/<int:anime_id>/episodes/", AnimeEpisodeListAPIView.as_view(), name="anime-episodes"),
     path("animes/<int:anime_id>/episodes/", AnimeEpisodesListView.as_view(), name="anime-episodes"),
     path("episodes/<int:pk>/video/", EpisodeVideoStreamView.as_view(), name="episode-video"),
     path("saved-animes/", SavedAnimeListCreateView.as_view(), name="saved_anime_list_create"),

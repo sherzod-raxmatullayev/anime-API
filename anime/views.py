@@ -1,6 +1,6 @@
 import mimetypes
 from sre_constants import CH_LOCALE
-from tkinter.tix import STATUS
+# from tkinter.tix import STATUS
 from xxlimited import Str
 from django.shortcuts import render
 import os
@@ -13,12 +13,14 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.generics import ListAPIView
+from rest_framework import generics
 from .serializers import EpisodeListSerializer
-from .serializers import AnimeSerializer
+from .serializers import AnimeSerializer, EpisodeSerializer
 from rest_framework import viewsets
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from .filters import AnimeFilter
+
 
 
 
@@ -42,7 +44,23 @@ class AnimeViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ["created_at", "release_date", "episodes", "title"]
     ordering = ["-created_at"]  # default
 
+class AnimeEpisodeListAPIView(generics.ListAPIView):
+    serializer_class = EpisodeSerializer
+    permission_classes = [IsAuthenticated]  # JWT bilan kirish shart
 
+    def get_queryset(self):
+        anime_id = self.kwargs["anime_id"]
+        return (
+            Episode.objects
+            .select_related("anime")
+            .filter(anime_id=anime_id)
+            .order_by("episode_number")
+        )
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["request"] = self.request
+        return ctx
 
 class AnimeEpisodesListView(ListAPIView):
     permission_classes = [IsAuthenticated]
